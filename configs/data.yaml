@@ -1,0 +1,20 @@
+# Dataset configuration for satellite SR diffusion
+
+paths:
+  hr_dir: "data/hr"              # Folder with original HR images
+  lr_dir: "data/lr"              # Folder with synthetic LR images (same size as HR)
+  manifest: "data/manifests/pairs.csv"
+
+naming:
+  lr_suffix: "_lr"                   # LR filenames look like whu_0001_lr_x4.png
+
+io:
+  image_size: 512                    # Resize images to 512x512
+  channels: 3                        # RGB
+
+splits:
+  train_frac: 0.9                    # 90% train, 10% validation
+
+loader:
+  batch_size: 4                      # Lower this if VRAM is limited
+  num_workers: 4                     # Increase for faster data loading

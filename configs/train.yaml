@@ -1,0 +1,54 @@
+# Training config for Satellite SR Diffusion
+
+# ---------- Dataset ----------
+# Uses configs/data.yaml for paths & loader
+
+# ---------- Model ----------
+model:
+  in_channels: 6                     # 3 noisy HR + 3 LR
+  out_channels: 3                    # predict epsilon/v
+  base_channels: 64
+  channel_mult: [1, 2, 4, 4]         # scales for UNet depth
+  num_res_blocks: 2
+  attn_resolutions: [16, 8]          # enable attention at lower resolutions
+  dropout: 0.0
+
+# ---------- Diffusion ----------
+diffusion:
+  objective: "v"                     # "v" or "eps"
+  timesteps: 1000                    # T steps
+  cosine_s: 0.008                    # cosine noise schedule parameter
+
+# ---------- Loss ----------
+loss:
+  lowfreq_l1_weight: 0.05            # helps prevent hallucinations
+  # lpips_weight: 0.0                # add later if wanted
+
+# ---------- Optimizer ----------
+optim:
+  optimizer: "adamw"
+  lr: 2e-4
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+  ema_decay: 0.9999                  # use EMA weights during inference
+
+# ---------- Training Loop ----------
+train:
+  epochs: 4                          # update later once everything works
+  steps_per_eval: 1000               # save/preview interval
+  mixed_precision: true              # use fp16 if supported
+  seed: 1337
+
+# ---------- Checkpoints ----------
+ckpt:
+  out_dir: "checkpoints/sr_v1"
+
+# ---------- Logging ----------
+logging:
+  wandb: false                       # enable later if wanted
+  log_every: 50                      # print loss every N steps
+
+# ---------- Loader override ----------
+loader:
+  batch_size: 4                      # also in data.yaml; this overrides if needed
+  num_workers: 4

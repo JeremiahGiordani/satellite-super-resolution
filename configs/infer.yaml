@@ -1,0 +1,13 @@
+# Inference config for Satellite SR Diffusion
+
+checkpoint: "checkpoints/sr_v1/model_step_1000.pt"
+
+sampler:
+  type: "ddim"                   # deterministic
+  steps: 50                      # denoising steps
+  cfg_weight: 1.0                # reserved for guidance later
+
+io:
+  lr_dir: "data/lr_whu"          # input LR folder
+  out_dir: "outputs/sr"          # where SR goes
+  image_size: 512                # must match training
