@@ -161,7 +161,7 @@ def main():
     # --- Load model + checkpoint ---
     ckpt_path = f"checkpoints/{EXP_NAME}/ckpt.pt"
     ckpt = torch.load(ckpt_path, map_location=device)
-    model = UNetSmall(in_ch=6, base=64, out_ch=3).to(device)
+    model = UNetSmall(in_ch=7, base=64, out_ch=3).to(device)
     model.load_state_dict(ckpt["model"], strict=True)
 
     # Rebuild schedule (use values saved in ckpt to avoid mismatch)
