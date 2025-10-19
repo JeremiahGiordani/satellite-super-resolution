@@ -178,7 +178,7 @@ def sample_with_panels(engine: DiffusionEngine, lr: torch.Tensor, steps: int, cf
         x_t = x_prev
 
     # Final SR (x0 approx from last)
-    final_sr = x_t.clamp(0, 1)
+    final_sr = x0_pred.clamp(0, 1)
     panels.append(label_image(tensor_to_pil(final_sr), "final"))
 
     return final_sr, panels
