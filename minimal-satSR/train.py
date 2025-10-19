@@ -132,8 +132,8 @@ def main():
                 t_v = torch.randint(0, T, (hr_v.shape[0],), device=device)
                 x_t_v, eps_v = q_sample_eps(hr_v, t_v, sched)
 
-                s_t = extract(sched["sqrt_one_minus_ab"], t, x_t.shape)[:, :, :1, :1]  # (B,1,1,1)
-                s_map = s_t.expand(-1, 1, x_t.shape[-2], x_t.shape[-1])                # (B,1,H,W)
+                s_t = extract(sched["sqrt_one_minus_ab"], t_v, x_t_v.shape)[:, :, :1, :1]  # (B,1,1,1)
+                s_map = s_t.expand(-1, 1, x_t_v.shape[-2], x_t_v.shape[-1])                # (B,1,H,W)
                 
                 eps_hat_v = model(torch.cat([x_t_v, lr_v, s_map], dim=1))
                 val_loss = mse(eps_hat_v, eps_v).item()
