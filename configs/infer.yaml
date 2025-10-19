@@ -8,6 +8,10 @@ sampler:
   cfg_weight: 1.0                # reserved for guidance later
 
 io:
-  lr_dir: "data/lr_whu"          # input LR folder
+  lr_dir: "data/lr"          # input LR folder
   out_dir: "outputs/sr"          # where SR goes
   image_size: 512                # must match training
+  hr_dir: "data/hr"
+panel:
+    save: true
+    mids: 3 
