@@ -127,7 +127,8 @@ def sample_sequence(model, lr: torch.Tensor, sched: dict, steps: int, panels: in
         x_t = sqrt_ab_next * x0_pred + sqrt_1mab_next * eps_pred
 
         # If current t is one of our targets, store the snapshot
-        if (t[0] in target_t_vals).item():
+        is_target = (target_t_vals == t[0]).any().item()
+        if is_target:
             snap_buffer.append( (int(t[0].item()), x0_pred[0].clamp(0,1).detach()) )
 
     # ensure t=0 snapshot is included
