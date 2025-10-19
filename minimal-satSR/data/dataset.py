@@ -5,20 +5,16 @@ from typing import List, Tuple
 
 from PIL import Image
 import torch
+import numpy as np
 from torch.utils.data import Dataset, DataLoader, random_split
 
 IMAGE_SIZE = 512  # hard-coded: keep it simple
 
-def _load_rgb(path: str, size: int = IMAGE_SIZE) -> torch.Tensor:
-    """Open image, convert to RGB, resize, return float tensor in [0,1], shape (3,H,W)."""
+def _load_rgb(path: str, size: int=IMAGE_SIZE) -> torch.Tensor:
     img = Image.open(path).convert("RGB").resize((size, size), Image.BICUBIC)
-    arr = torch.from_numpy(
-        (torch.ByteTensor(bytearray(img.tobytes())).float() / 255.0)
-        .reshape(img.size[1], img.size[0], 3)
-        .numpy()
-    )  # H,W,3 float64 because of .numpy(); we'll permute & cast next
-    x = arr.permute(2, 0, 1).contiguous().float()  # 3,H,W float32
-    return x.clamp_(0.0, 1.0)
+    arr = np.array(img, dtype=np.uint8)              # H,W,3 in 0..255
+    x = torch.from_numpy(arr).permute(2,0,1).float() # 3,H,W
+    return (x / 255.0).clamp_(0.0, 1.0)
 
 class PairDataset(Dataset):
     """

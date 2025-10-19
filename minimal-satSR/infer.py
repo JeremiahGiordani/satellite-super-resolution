@@ -6,6 +6,7 @@ import math
 from pathlib import Path
 
 import torch
+import numpy as np
 from PIL import Image
 
 # ==== CONSTANTS (no CLI) ====
@@ -27,12 +28,12 @@ def load_paths_yaml(path="configs/paths.yaml"):
     with open(path, "r") as f:
         return yaml.safe_load(f)
 
-def load_rgb(path: str, size: int = IMAGE_SIZE) -> torch.Tensor:
-    """Open image -> RGB -> resize -> tensor [0,1], shape (3,H,W)."""
+
+def load_rgb(path: str, size: int=IMAGE_SIZE) -> torch.Tensor:
     img = Image.open(path).convert("RGB").resize((size, size), Image.BICUBIC)
-    x = torch.from_numpy(torch.ByteTensor(bytearray(img.tobytes())).float().numpy())
-    x = x.view(img.size[1], img.size[0], 3).permute(2, 0, 1).contiguous().float() / 255.0
-    return x.clamp_(0.0, 1.0)
+    arr = np.array(img, dtype=np.uint8)              # H,W,3 in 0..255
+    x = torch.from_numpy(arr).permute(2,0,1).float() # 3,H,W
+    return (x / 255.0).clamp_(0.0, 1.0)
 
 def to_pil(x: torch.Tensor) -> Image.Image:
     """Tensor [3,H,W] in [0,1] -> PIL Image."""
@@ -152,7 +153,7 @@ def main():
     # --- Load paths + manifest ---
     paths = load_paths_yaml()
     manifest_path = paths["manifest"]
-    out_dir = paths.get("out_dir", "outputs/minimal")
+    out_dir = paths.get("out_dir", f"outputs/{EXP_NAME}")
     out_final = Path(out_dir) / "final"
     out_panels = Path(out_dir) / "panels"
     out_final.mkdir(parents=True, exist_ok=True)
