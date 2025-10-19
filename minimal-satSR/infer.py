@@ -14,6 +14,7 @@ STEPS      = 25                  # number of reverse denoising steps
 PANELS     = 5                   # number of snapshots in the top row (incl. final)
 IMAGE_SIZE = 512                 # must match training (dataset.py)
 SEED       = 123                 # fixed seed for reproducible noise visualization (optional)
+COUNT = 20
 
 # ============================
 
@@ -155,7 +156,9 @@ def main():
     # --- Iterate manifest rows ---
     with open(manifest_path, "r", newline="") as f:
         reader = csv.DictReader(f)
-        for row in reader:
+        for i, row in enumerate(reader):
+            if i == COUNT:
+                return
             hr_path = row.get("hr_path")
             lr_path = row.get("lr_path")
             stem = Path(hr_path or lr_path).stem  # pick something stable for naming
