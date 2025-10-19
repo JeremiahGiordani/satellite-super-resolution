@@ -98,35 +98,48 @@ def sample_sequence(model, lr: torch.Tensor, sched: dict, steps: int, panels: in
     x_t = torch.randn(1, 3, H, W, device=device)
 
     # Build decreasing timesteps
-    ts = make_timesteps(T, steps, device=device)  # [S,] ints
-    # Decide which step indices to snapshot as x0 panels (evenly spaced)
-    snap_ids = torch.linspace(0, len(ts) - 1, steps=min(panels - 1, len(ts)), device=device).round().long().tolist()
+    ts = make_timesteps(T, steps, device=device)  # e.g., tensor([199, 191, ..., 0])
 
-    # First panel = pure noise visualization
-    panel_imgs = [noise_to_vis(x_t[0]).clamp(0, 1)]
+    # Decide WHICH t values we want to snapshot (excluding the initial pure-noise),
+    # e.g., 4 evenly spaced t's, and ALWAYS include t=0 at the end.
+    num_x0_snaps = max(1, panels - 1)  # we already reserve first panel for noise
+    target_t_vals = torch.linspace(ts[0].item(), 0, steps=num_x0_snaps, device=device).round().long()
+    target_t_vals = torch.unique_consecutive(target_t_vals)
+    if target_t_vals[-1].item() != 0:
+        target_t_vals = torch.cat([target_t_vals, torch.tensor([0], device=device)])
 
+    # We'll collect (t_value, x0_image) and sort by t descending for display
+    snap_buffer = []
+
+    panel_imgs = [noise_to_vis(x_t[0]).clamp(0, 1)]  # panel 1 = visualized noise
     x0_pred = None
-    for i in range(len(ts) - 1):
-        t = ts[i].expand(1)          # (1,)
-        t_next = ts[i + 1].expand(1) # (1,)
 
-        eps_pred = model(torch.cat([x_t, lr.unsqueeze(0)], dim=1))  # [1,3,H,W]
+    for i in range(len(ts) - 1):
+        t = ts[i].expand(1)
+        t_next = ts[i + 1].expand(1)
+
+        eps_pred = model(torch.cat([x_t, lr.unsqueeze(0)], dim=1))
         x0_pred = predict_x0_from_eps(x_t, eps_pred, t, sched)
 
-        # DDIM deterministic update: x_{t_next} = sqrt(ab_next)*x0 + sqrt(1-ab_next)*eps_pred
+        # deterministic DDIM step
         sqrt_ab_next = extract(sched["sqrt_ab"], t_next, x_t.shape)
         sqrt_1mab_next = extract(sched["sqrt_one_minus_ab"], t_next, x_t.shape)
         x_t = sqrt_ab_next * x0_pred + sqrt_1mab_next * eps_pred
 
-        # Save evenly spaced snapshots of x0 (clean reconstructions)
-        if i in snap_ids:
-            panel_imgs.append(x0_pred[0].clamp(0, 1))
+        # If current t is one of our targets, store the snapshot
+        if (t[0] in target_t_vals).item():
+            snap_buffer.append( (int(t[0].item()), x0_pred[0].clamp(0,1).detach()) )
 
-    # Ensure final x0 is the last panel
-    if len(panel_imgs) < PANELS:
-        panel_imgs.append(x0_pred[0].clamp(0, 1))
+    # ensure t=0 snapshot is included
+    if not any(tv == 0 for tv, _ in snap_buffer):
+        snap_buffer.append( (0, x0_pred[0].clamp(0,1).detach()) )
 
-    final_x0 = x0_pred[0].clamp(0, 1)
+    # Sort by t descending so panels show from noisy→clean
+    snap_buffer.sort(key=lambda p: p[0], reverse=True)
+    for _, im in snap_buffer[: (panels - 1)]:
+        panel_imgs.append(im)
+
+    final_x0 = snap_buffer[-1][1]  # last item has t smallest (ideally 0)
     return final_x0, panel_imgs
 
 def main():
