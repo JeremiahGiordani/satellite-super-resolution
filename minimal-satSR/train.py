@@ -8,9 +8,9 @@ from torch.utils.data import DataLoader
 
 # --- Experiment constants (no CLI) ---
 EXP_NAME             = "minimal_satSR_v1"
-BATCH_SIZE           = 8
+BATCH_SIZE           = 16
 NUM_WORKERS          = 4
-EPOCHS               = 2
+EPOCHS               = 30
 LEARNING_RATE        = 2e-4
 SEED                 = 1337
 
@@ -131,7 +131,11 @@ def main():
                 lr_v = vb["lr"].to(device)
                 t_v = torch.randint(0, T, (hr_v.shape[0],), device=device)
                 x_t_v, eps_v = q_sample_eps(hr_v, t_v, sched)
-                eps_hat_v = model(torch.cat([x_t_v, lr_v], dim=1))
+
+                s_t = extract(sched["sqrt_one_minus_ab"], t, x_t.shape)[:, :, :1, :1]  # (B,1,1,1)
+                s_map = s_t.expand(-1, 1, x_t.shape[-2], x_t.shape[-1])                # (B,1,H,W)
+                
+                eps_hat_v = model(torch.cat([x_t_v, lr_v, s_map], dim=1))
                 val_loss = mse(eps_hat_v, eps_v).item()
                 print(f"  ↳ val_loss={val_loss:.5f}")
             except StopIteration:
