@@ -80,7 +80,7 @@ def main():
     )
 
     # --- Model ---
-    model = UNetSmall(in_ch=6, base=64, out_ch=3).to(device)
+    model = UNetSmall(in_ch=7, base=64, out_ch=3).to(device)
     opt = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
     mse = nn.MSELoss()
 
@@ -98,9 +98,13 @@ def main():
 
             B = hr.shape[0]
             t = torch.randint(low=0, high=T, size=(B,), device=device)
+            x_t, eps = q_sample_eps(hr, t, sched)
 
-            x_t, eps = q_sample_eps(hr, t, sched)           # forward noising
-            inp = torch.cat([x_t, lr], dim=1)               # [B,6,H,W]
+            # NEW: per-sample scalar s_t = sqrt(1 - alpha_bar[t])
+            s_t = extract(sched["sqrt_one_minus_ab"], t, x_t.shape)[:, :, :1, :1]  # (B,1,1,1)
+            s_map = s_t.expand(-1, 1, x_t.shape[-2], x_t.shape[-1])                # (B,1,H,W)
+
+            inp = torch.cat([x_t, lr, s_map], dim=1)  # (B,7,H,W)
             eps_hat = model(inp)
 
             loss = mse(eps_hat, eps)

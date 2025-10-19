@@ -118,7 +118,10 @@ def sample_sequence(model, lr: torch.Tensor, sched: dict, steps: int, panels: in
         t = ts[i].expand(1)
         t_next = ts[i + 1].expand(1)
 
-        eps_pred = model(torch.cat([x_t, lr.unsqueeze(0)], dim=1))
+        s_t = extract(sched["sqrt_one_minus_ab"], t, x_t.shape)[:, :, :1, :1]
+        s_map = s_t.expand(-1, 1, x_t.shape[-2], x_t.shape[-1])
+        eps_pred = model(torch.cat([x_t, lr.unsqueeze(0), s_map], dim=1))
+
         x0_pred = predict_x0_from_eps(x_t, eps_pred, t, sched)
 
         # deterministic DDIM step

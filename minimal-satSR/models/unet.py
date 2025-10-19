@@ -20,7 +20,7 @@ class UNetSmall(nn.Module):
     Input:  [B, 6, H, W]  (concat of x_t and LR, both in [0,1])
     Output: [B, 3, H, W]  (epsilon prediction; unbounded)
     """
-    def __init__(self, in_ch: int = 6, base: int = 64, out_ch: int = 3):
+    def __init__(self, in_ch: int = 7, base: int = 64, out_ch: int = 3):
         super().__init__()
         # Encoder
         self.enc1 = conv_block(in_ch, base)        # 6 -> 64
