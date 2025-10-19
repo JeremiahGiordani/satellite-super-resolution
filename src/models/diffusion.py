@@ -136,7 +136,7 @@ def eps_x0_from_v(x_t, v, alpha_bar_t):
     """
     a = torch.sqrt(alpha_bar_t)
     b = torch.sqrt(1 - alpha_bar_t)
-    eps = a * x_t + b * v
+    eps = a * v + b * x_t
     x0  = a * x_t - b * v
     # To keep same scale as eps/x0 definitions above (no extra division)
     return eps, x0
