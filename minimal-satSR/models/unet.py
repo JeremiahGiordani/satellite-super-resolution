@@ -113,7 +113,7 @@ class UNetSmall(nn.Module):
     - Depthwise-separable convs to cut memory/compute
     - Attention only at the bottleneck with 2 heads
     """
-    def __init__(self, in_ch: int = 6, base: int = 64, out_ch: int = 3):
+    def __init__(self, in_ch: int = 7, base: int = 64, out_ch: int = 3):
         super().__init__()
         ch1 = base
         ch2 = base * 2
