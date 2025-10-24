@@ -1,0 +1,4 @@
+hr_dir: ../data/hr
+lr_dir: ../data/lr
+manifest: ../data/manifests/pairs.csv
+out_dir: ../outputs/minimal
