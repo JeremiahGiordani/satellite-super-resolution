@@ -7,9 +7,9 @@ import torch.nn as nn
 
 # ====== CONSTANTS (no CLI) ======
 EXP_NAME            = "encdec_sr_v1"
-BATCH_SIZE          = 4
+BATCH_SIZE          = 16
 NUM_WORKERS         = 4
-EPOCHS              = 2
+EPOCHS              = 20
 LEARNING_RATE       = 2e-4
 SEED                = 1337
 
@@ -20,6 +20,7 @@ SAVE_LATEST_COPY    = True          # keep checkpoints/EXP_NAME/ckpt.pt up to da
 
 from data.dataset import make_loaders
 from models.srunet import SRUNet
+from loss.loss import CombinedLoss
 
 def set_seed(seed: int = 1337):
     torch.manual_seed(seed)
@@ -77,6 +78,7 @@ def main():
     model = SRUNet(in_ch=3, base=64, out_ch=3, residual=True, use_attn=True).to(device)
     opt = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
     l1 = nn.L1Loss()
+    criterion = CombinedLoss().to(device) 
 
     global_step = 0
     start = time.time()
@@ -88,8 +90,7 @@ def main():
             hr = batch["hr"].to(device, non_blocking=True)
 
             sr = model(lr)                                 # residual inside: SR = LR + Δ
-            sr = sr.clamp(0.0, 1.0)
-            loss = l1(sr, hr)
+            loss = criterion(sr, hr)
 
             opt.zero_grad(set_to_none=True)
             loss.backward()
@@ -97,10 +98,14 @@ def main():
 
             global_step += 1
             if (global_step % LOG_EVERY) == 0:
+                comps = criterion.last
                 with torch.no_grad():
                     p = psnr(sr, hr).item()
                 elapsed = time.time() - start
-                print(f"[epoch {epoch}] step {global_step:06d}  loss={loss.item():.5f}  psnr={p:.2f}dB  ({elapsed:.1f}s)")
+                print(
+                    f"... loss={comps['total']:.5f} pix={comps['pix']:.5f} "
+                    f"perc={comps.get('percep',0):.5f} edge={comps.get('edge',0):.5f}"
+                )
 
             if (global_step % SAVE_EVERY_STEPS) == 0:
                 _save_ckpt(model, ckpt_dir, step=global_step, refresh_latest=SAVE_LATEST_COPY)
