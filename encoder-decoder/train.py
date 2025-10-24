@@ -13,7 +13,7 @@ EPOCHS              = 2
 LEARNING_RATE       = 2e-4
 SEED                = 1337
 
-LOG_EVERY           = 1            # optimizer steps
+LOG_EVERY           = 50            # optimizer steps
 SAVE_EVERY_STEPS    = 500           # checkpoint cadence (by step)
 SAVE_LATEST_COPY    = True          # keep checkpoints/EXP_NAME/ckpt.pt up to date
 # =================================
