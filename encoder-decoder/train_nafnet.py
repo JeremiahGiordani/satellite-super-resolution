@@ -19,7 +19,7 @@ SAVE_LATEST_COPY    = True          # keep checkpoints/EXP_NAME/ckpt.pt up to da
 # =================================
 
 from data.dataset import make_loaders
-from models.srunet import SRUNet
+from models.nafnet import NAFNetU
 from loss.loss import CombinedLoss
 
 def set_seed(seed: int = 1337):
@@ -75,7 +75,7 @@ def main():
     )
 
     # --- Model / Optim ---
-    model = SRUNet(in_ch=3, base=64, out_ch=3, residual=True, use_attn=True).to(device)
+    model = NAFNetU(in_ch=3, base=64, out_ch=3, residual=True).to(device)
     opt = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
     l1 = nn.L1Loss()
     criterion = CombinedLoss().to(device) 
